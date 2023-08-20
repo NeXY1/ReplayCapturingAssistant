@@ -1,0 +1,14 @@
+{
+  "name": "Replay Capturing Assistant",
+  "author": "Xinavo & NeXY",
+  "version": "1",
+  "description": "App to help record replays and cinematics.",
+  "directive": "replayCapturingAssistant",
+  "domElement": "<replay-capturing-assistant></replay-capturing-assistant>",
+  "css": {
+    "width": "1920px",
+    "height": "1080px",
+    "top": "0px",
+    "left": "0px"
+  }
+}

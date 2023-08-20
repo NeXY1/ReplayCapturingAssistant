@@ -1,0 +1,910 @@
+<div style="width: 100%; height: 100%; font-size: 24px" id="rra-main-div">
+
+  <!--
+
+  Copyright 2023 NeXY
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  -->
+  
+  <!-- Aspect ratio stripes -->
+  <!-- Left stripe -->
+  <div style="right: {{ linePos.horizontal }}px;" id="rra-left-div"></div>
+
+  <!-- Right stripe -->
+  <div style="left: {{ linePos.horizontal }}px;" id="rra-right-div"></div>
+
+  <!-- Top stripe -->
+  <div style="width: {{ linePos.verticalWidth }}px; bottom: {{ linePos.vertical }}px;" id="rra-top-div"></div>
+
+  <!-- Bottom stripe -->
+  <div style="width: {{ linePos.verticalWidth }}px; top: {{ linePos.vertical }}px;" id="rra-bottom-div"></div>
+
+  <!-- -- Replay's -- -->
+  <div layout="column" id="rra-replay-div">
+    <div style="height:20px; padding: 0 5px 0 5px" layout="row" layout-align="space-between center">
+
+      <!-- Top left icon -->
+      <!-- Open file -->
+      <button class="rrarpl-btn" ng-if="!renaming && state != 'recording'" ng-click="listRecordings()" id="rrarpl-openf">
+          <md-icon inline="true" id="rrarpl-openfi">folder</md-icon>
+      </button>
+    
+
+      <!-- Renaming -->
+      <button ng-if="renaming" ng-click="cancelRename()" id="rrarpl-cancelr">
+          <md-icon style="cursor: pointer; color: #FD9393;">close</md-icon>
+      </button>
+      
+      <!-- Recording -->
+      <button ng-if="!renaming && state == 'recording'" md-no-ink ng-click="cancelRecording()" class="rrarpl-btn1-tl" id="rrarpl-cancelrec">
+          <md-icon style="cursor: pointer; color: #FD9393;">close</md-icon>
+      </button>
+
+      <!-- Filename text box --> 
+      <!-- File name -->
+      <label id="rrarpl-ftbl">
+          <input placeholder="(no file)" ng-disabled="state == 'recording' || !loadedFile" ng-focus="startRenaming()" ng-mouseup="hoverRenaming()" ng-mouseenter="hoverRenaming()" ng-model="loadedFile" id="rrarpl-ftb"></input>
+      </label>
+
+      <!-- Top right icon -->
+      <!-- Renaming -->
+      <button ng-if="renaming" ng-disabled="!loadedFile" ng-click="acceptRename()" id="rrarpl-acceptr">
+          <md-icon style="cursor: pointer; color: #A8DD73;">done</md-icon>
+      </button>
+
+      <!-- Close -->
+      <button ng-if="!renaming && state != 'recording' && state != 'idle'" ng-disabled="state != 'playing'" ng-click="stop()" id="rrarpl-stop">
+          <md-icon style="cursor:pointer; color: red;">stop</md-icon>
+      </button>
+
+      <!-- Recording --> 
+      <button ng-if="!renaming && state != 'playing'" ng-click="toggleRecording()" ng-disabled="state == 'playing'" id="rrarpl-record">
+          <md-icon style="cursor:pointer; color:red">{{ state == 'recording' ? 'stop' : 'fiber_manual_record'}}</md-icon>
+      </button>
+
+    
+    <!-- Play/pause -->
+    <button ng-click="togglePlay()" ng-disabled="state == 'recording' || !loadedFile" id="rrarpl-pause">
+        <md-icon style="cursor:pointer;">{{ (state == 'playing' && !paused) ? 'pause' : 'play_arrow' }}</md-icon>
+    </button>
+  </div>
+  
+  <!-- Playback position number --> 
+  <span>
+      <span ng-style="{color: loadedFile? 'lightgrey':'darkgrey'}" id="rrarpl-time">
+          <span ng-style="{color: isSeeking? 'white':''}">{{ positionSeconds*1000 | date: 'mm:ss.sss'}}</span>
+          <small id="rrarpl-time-small">({{ totalSeconds*1000 | date: 'mm:ss.sss'}})</small>
+      </span>
+  </span>
+
+  <!-- Speed --> 
+  <span id="rrarpl-speed">
+      <button ng-click="toggleSpeed(-1)" id="rrarpl-removespd">
+        <md-icon class="material-icons" style="font-size: 1em; cursor:pointer; color: rgba(255, 255, 255, 0.901961);">remove</md-icon>
+      </button>
+
+      <small ng-style="{color: loadedFile? '':'white'}">{{speed.toFixed(2)}}x
+      </small>
+
+      <button ng-click="toggleSpeed(+1)" id="rrarpl-addspd">
+        <md-icon class="material-icons" style="font-size: 1em; cursor:pointer; color: rgba(255, 255, 255, 0.901961)">add</md-icon>
+      </button>
+  </span>
+
+  <!-- Playback position bar --> 
+  <md-slider ng-disabled="!loadedFile" ng-model="positionPercent" min="0" max="1" step="0.001" ng-change="seek(positionPercent)" ng-disabled="state != 'playing'" aria-label="_" id="rrarpl-rpos"></md-slider>
+
+  </div>
+
+  <!-- Aspect ratio controls -->
+  <div id="rra-ratio-div">
+
+    <!-- Default screen's ratio -->
+    <button ng-click="setAspectRatio(0)" style="border-width: {{ formElement.B1Border }}px;" id="rra-b1"
+      class="rra-classic-rbtn">
+      <i><b>{{ formElement.defaultRatio }}</b></i>
+    </button>
+
+    <!-- 9/16 ratio -->
+    <button ng-click="setAspectRatio(916)" style="border-width: {{ formElement.B2Border }}px;" id="rra-b2"
+      class="rra-classic-rbtn">
+      <i><b>9:16</b></i>
+    </button>
+
+    <!-- 21/9 ratio -->
+    <button ng-click="setAspectRatio(219)" style="border-width: {{ formElement.B3Border }}px;" id="rra-b3"
+      class="rra-classic-rbtn">
+      <i><b>21:9</b></i>
+    </button>
+    
+    <!-- 9/19.5 ratio -->
+    <button ng-click="setAspectRatio(9195)" style="border-width: {{ formElement.B4Border }}px;" id="rra-b4"
+      class="rra-classic-rbtn">
+      <i><b>9:19.5</b></i>
+    </button>
+
+    <div class="rra-small-line" id="rra-sl-1"></div>
+
+    <!-- Reverse ratio -->
+    <button ng-click="setReversed()" id="rra-b5">
+      <i>REV</i>
+    </button>
+
+    <div class="rra-small-line" id="rra-sl-2"></div>
+
+    <!-- Custom ratio -->
+    <!-- Add W -->
+    <button ng-click="changeW(side.UP)" id="rra-b6" class="rra-customratio-btn">
+        +
+    </button>
+
+    <!-- Remove W -->
+    <button ng-click="changeW(side.DOWN)" id="rra-b7" class="rra-customratio-btn">
+        -
+    </button>
+
+    <span id="rra-cr-w"><b>{{ customRatio.W }}</b></span>
+    <span id="rra-cr-dots"><b> : </b></span>
+    <span id="rra-cr-h"><b>{{ customRatio.H }}</b></span>
+
+    <!-- Add H -->
+    <button ng-click="changeH(side.UP)" id="rra-b8" class="rra-customratio-btn">
+        +
+    </button>
+
+    <!-- Remove H -->
+    <button ng-click="changeH(side.DOWN)" id="rra-b9" class="rra-customratio-btn">
+        -
+    </button>
+
+    <!-- Apply custom ratio -->
+    <button ng-click="setCustomRatio()" id="rra-b10" class="rra-customratio-btn">
+        Enter
+    </button>
+  </div>
+
+  <!-- Hide/show UI -->
+  <button ng-click="hideOrShow(UI.ALL)" ng-mouseover="mouseOnZone()" id="rra-b11">
+    <b>{{ formElement.UIButton }}</b>
+  </button>
+
+  <!-- Hide/show replays -->
+  <button ng-click="hideOrShow(UI.RPL)" id="rra-b12">
+    <b>Replays</b>
+  </button>
+
+  <!-- Detecting the cursor outside the buttons -->
+  <div ng-mouseover="mouseLeftZone()" id="actionDiv"></div>
+
+  <style>
+    #rra-left-div {
+      width: 1920px;
+      height: 100%;
+      position: absolute;
+      background: rgba(0, 0, 0, 0.43);
+      top: 0; 
+
+      transition: 
+        right 0.8s cubic-bezier(0.16, 0.28, 0.23, 0.99),
+        width 0.8s cubic-bezier(0.16, 0.28, 0.23, 0.99);
+    }
+
+    #rra-right-div {
+      width: 1920px;
+      height: 100%;
+      position: absolute;
+      background: rgba(0, 0, 0, 0.43);
+      top: 0; 
+
+      transition: 
+        left 0.8s cubic-bezier(0.16, 0.28, 0.23, 0.99),
+        width 0.8s cubic-bezier(0.16, 0.28, 0.23, 0.99);
+    }
+
+    #rra-top-div {
+      height: 1080px;
+      position: absolute;
+      background: rgba(0, 0, 0, 0.43);
+      right: 0;
+      left: 0;
+      margin: 0 auto; 
+
+      transition: 
+        bottom 0.8s cubic-bezier(0.16, 0.28, 0.23, 0.99),
+        width 0.8s cubic-bezier(0.16, 0.28, 0.23, 0.99);
+    }
+
+    #rra-bottom-div {
+      height: 1080px;
+      position: absolute;
+      background: rgba(0, 0, 0, 0.43);
+      right: 0;
+      left: 0;
+      margin: 0 auto; 
+
+      transition: 
+        top 0.8s cubic-bezier(0.16, 0.28, 0.23, 0.99),
+        width 0.8s cubic-bezier(0.16, 0.28, 0.23, 0.99);
+    }
+
+    @keyframes rra-rbtn-ani {
+      from
+      {
+        border-width: 0;
+      }
+      to
+      {
+        border-width: 5px;
+      }
+    }
+
+    @keyframes rra-rbtn-hover-ani {
+      from
+      {
+        background: rgba(172, 172, 172, 1);
+        color: rgba(82, 82, 82, 1);
+      }
+      to
+      {
+        background: rgb(119, 99, 63);
+        color: rgb(255, 255, 255);
+      }
+    }
+
+    @keyframes rra-rbtnrev-hover-ani {
+      from
+      {
+        background: rgba(255, 159, 22, 1);
+        color: rgba(85, 85, 85, 1);
+      }
+      to
+      {
+        background: rgb(221, 137, 20);
+        color: rgb(255, 255, 255);
+      }
+    }
+
+    @keyframes rra-hideuibtn-hover-ani {
+      from
+      {
+        background: rgba(122, 122, 122, 0.6);
+        border-color: rgba(153, 153, 153, 0.7);
+      }
+      to
+      {
+        background: rgba(122, 122, 122, 1);
+        border-color: rgb(214, 159, 57);
+      }
+    }
+
+    @keyframes rrarpl-btn-hover-ani {
+      from
+      {
+        background: rgba(172, 172, 172, 1);
+        color: rgba(82, 82, 82, 1);
+        border-width: 0px;
+      }
+      to
+      {
+        background: rgb(119, 99, 63);
+        color: rgb(255, 255, 255);
+        border-width: 5px;
+      }
+    }
+
+    @keyframes rrarpl-ftb-focus-ani {
+      from
+      {
+        border-width: 3px;
+        border-color: rgba(121, 121, 121, 1);
+        background: rgba(121, 121, 121, 0.6);
+      }
+      to
+      {
+        background: rgba(153, 153, 153, 0.6);
+        border-color: rgba(255, 159, 22, 1);
+        border-width: 5px;
+      }
+    }
+
+    #actionDiv {
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      width: 600px;
+      height: 600px;
+      z-index: 1;
+    }
+
+    #rra-ratio-div {
+      width: 640px;
+      height: 60px;
+      border-top-right-radius: 25px;
+      border-top-left-radius: 25px;
+      position: absolute;
+      background: rgba(84, 84, 84, 0.6);
+      backdrop-filter: blur(5px);
+      left: 13px;
+      bottom: {{ formElement.RDBottom }}px;
+      transition: bottom 0.5s cubic-bezier(0, 0, 0.58, 1);
+    }
+
+    .rra-classic-rbtn {
+      width: 90px;
+      height: 39px;
+      margin-top: 12px;
+      background: rgba(172, 172, 172, 1);
+      color: rgba(82, 82, 82, 1);
+      border-radius: 20px;
+      border-style: solid;
+      border-color: rgba(255, 159, 22, 1);
+      font-family: "Montserrat", sans-serif;
+      transition: border-width 0.5s cubic-bezier(0, 0, 0.58, 1);
+      cursor: pointer;
+    }
+
+    .rra-customratio-btn {
+      position: absolute;
+      background: rgba(255, 159, 22, 1);
+      color: rgba(85, 85, 85, 1);
+      border-style: solid;
+      border-color: rgba(255, 159, 22, 1);
+      font-size: 10px;
+      font-family: "Montserrat", sans-serif;
+      cursor: pointer;
+    }
+
+    #rra-b1 {
+      margin-left: 11px;
+      width: 90px;
+    }
+
+    #rra-b2 {
+      margin-left: 3px;
+    }
+
+    #rra-b3 {
+      margin-left: 3px;
+    }
+
+    #rra-b4 {
+      margin-left: 3px;
+    }
+
+    #rra-b5 {
+      position: absolute;
+      left: 417px;
+      width: 66px;
+      height: 39px;
+      bottom: 8px;
+      background: rgba(255, 159, 22, 1);
+      color: rgba(85, 85, 85, 1);
+      border-radius: 20px;
+      border-style: solid;
+      border-color: rgba(255, 159, 22, 1);
+      font-size: 18px;
+      font-family: "Montserrat", sans-serif;
+      cursor: pointer;
+    }
+
+    #rra-b6 {
+      width: 20px;
+      height: 20px;
+      bottom: 29px;
+      left: 500px;
+      border-top-right-radius: 41px;
+      border-top-left-radius: 41px;
+    }
+
+    #rra-b7 {
+      width: 20px;
+      height: 20px;
+      bottom: 8px;
+      left: 500px;
+      border-bottom-right-radius: 41px;
+      border-bottom-left-radius: 41px;
+    }
+
+    #rra-b8 {
+      width: 20px;
+      height: 20px;
+      bottom: 29px;
+      left: 606px;
+      border-top-right-radius: 41px;
+      border-top-left-radius: 41px;
+    }
+
+    #rra-b9 {
+      width: 20px;
+      height: 20px;
+      bottom: 8px;
+      left: 606px;
+      border-bottom-right-radius: 41px;
+      border-bottom-left-radius: 41px;
+    }
+
+    #rra-b10 {
+      width: 80px;
+      height: 15px;
+      bottom: 8px;
+      left: 523px;
+      border-radius: 20px;
+    }
+
+    #rra-b11 {
+      width: 70px;
+      height: 27px;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgb(122, 122, 122);
+      color: rgb(255, 255, 255);
+      border-radius: 20px 20px {{formElement.hideBtnBorderRadius}}px {{formElement.hideBtnBorderRadius}}px;
+      border-style: solid;
+      border-color: rgba(153, 153, 153, 0.7);
+      font-size: 10px;
+      font-family: "Montserrat", sans-serif;
+      cursor: pointer;
+      z-index: 3;
+      transition: border-radius 0.2s cubic-bezier(0, 0, 0.58, 1);
+    }
+
+    #rra-b12 {
+      position: absolute;
+      top: {{ formElement.RPLHBtnX }}px;
+      left: 10px;
+      width: 70px;
+      height: 27px;
+      background: rgb(122, 122, 122);
+      color: rgb(255, 255, 255);
+      border-radius: {{formElement.hideBtnBorderRadius}}px {{formElement.hideBtnBorderRadius}}px 20px 20px;
+      border-style: solid;
+      border-color: rgba(153, 153, 153, 0.7);
+      font-size: 10px;
+      font-family: "Montserrat", sans-serif;
+      cursor: pointer;
+      z-index: 2;
+      transition:
+        top 0.2s cubic-bezier(0, 0, 0.58, 1),
+        border-radius 0.2s cubic-bezier(0, 0, 0.58, 1);
+    }
+
+    #rra-b1:hover {
+      animation: rra-rbtn-hover-ani 0.3s 1;
+      background: rgb(119, 99, 63);
+      color: rgb(255, 255, 255);
+    }
+
+    #rra-b2:hover {
+      animation: rra-rbtn-hover-ani 0.3s 1;
+      background: rgb(119, 99, 63);
+      color: rgb(255, 255, 255);
+    }
+
+    #rra-b3:hover {
+      animation: rra-rbtn-hover-ani 0.3s 1;
+      background: rgb(119, 99, 63);
+      color: rgb(255, 255, 255);
+    }
+
+    #rra-b4:hover {
+      animation: rra-rbtn-hover-ani 0.3s 1;
+      background: rgb(119, 99, 63);
+      color: rgb(255, 255, 255);
+    }
+
+    #rra-b5:hover {
+      animation: rra-rbtnrev-hover-ani 0.3s 1;
+      background: rgb(221, 137, 20);
+      color: rgb(255, 255, 255);
+    }
+
+    #rra-b6:hover {
+      animation: rra-rbtnrev-hover-ani 0.3s 1;
+      background: rgb(221, 137, 20);
+      color: rgb(255, 255, 255);
+    }
+
+    #rra-b7:hover {
+      animation: rra-rbtnrev-hover-ani 0.3s 1;
+      background: rgb(221, 137, 20);
+      color: rgb(255, 255, 255);
+    }
+
+    #rra-b8:hover {
+      animation: rra-rbtnrev-hover-ani 0.3s 1;
+      background: rgb(221, 137, 20);
+      color: rgb(255, 255, 255);
+    }
+
+    #rra-b9:hover {
+      animation: rra-rbtnrev-hover-ani 0.3s 1;
+      background: rgb(221, 137, 20);
+      color: rgb(255, 255, 255);
+    }
+
+    #rra-b10:hover {
+      animation: rra-rbtnrev-hover-ani 0.3s 1;
+      background: rgb(221, 137, 20);
+      color: rgb(255, 255, 255);
+    }
+
+    #rra-b10:hover {
+      animation: rra-rbtnrev-hover-ani 0.3s 1;
+      background: rgb(221, 137, 20);
+      color: rgb(255, 255, 255);
+    }
+
+    #rra-b11:hover {
+      animation: rra-hideuibtn-hover-ani 0.3s 1, rra-ui-btn 0.3 cubic-bezier(0, 0, 0.58, 1);
+      background: rgba(122, 122, 122, 1);
+      border-color: rgb(214, 159, 57);
+    }
+
+    #rra-b12:hover {
+      animation: rra-hideuibtn-hover-ani 0.3s 1, rra-ui-btn 0.3 cubic-bezier(0, 0, 0.58, 1);
+      background: rgba(122, 122, 122, 1);
+      border-color: rgb(214, 159, 57);
+    }
+
+    .rra-small-line {
+      position: absolute;
+      width: 2px;
+      height: 42px;
+      top: 10px;
+      background: rgba(172, 172, 172, 1);
+      border-radius: 20px;
+    }
+
+    #rra-sl-1 {
+      left: 408px;
+    }
+
+    #rra-sl-2 {
+      left: 489px;
+    }
+
+    #rra-cr-w {
+      position: absolute;
+      top: 10px;
+      left: 526px;
+      font-family: "Montserrat", sans-serif;
+      color: {{ formElement.CRWColor }};
+      transition: color 0.5s cubic-bezier(0, 0, 0.58, 1);
+    }
+
+    #rra-cr-dots {
+      position: absolute;
+      top: 10px;
+      left: 557px;
+      font-family: "Montserrat", sans-serif;
+      color: #acacac;
+    }
+
+    #rra-cr-h {
+      position: absolute;
+      top: 10px;
+      left: 570px;
+      font-family: "Montserrat", sans-serif;
+      color: {{ formElement.CRHColor }};
+      transition: color 0.5s cubic-bezier(0, 0, 0.58, 1);
+    }
+
+    #rra-replay-div {
+      height:130px;
+      width: 370px;
+      color: #acacac;
+      background: rgba(84, 84, 84, 0.6);
+      backdrop-filter: blur(5px);
+      position: absolute;
+      bottom: {{ formElement.RPLpositionY }}px;
+      right: {{ formElement.RPLpositionX }}px;
+      font-family: "Montserrat", sans-serif;
+      font-size: 23px;
+      border-top-left-radius: 20px;
+      transition: right 0.5s cubic-bezier(0, 0, 0.58, 1);
+    }
+
+    #rrarpl-openf {
+      margin: 0;
+      padding: 0;
+      width: 40px;
+      height: 40px;
+      font-size: 15px;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(172, 172, 172, 1);
+      color: rgba(82, 82, 82, 1);
+      border-radius: 20px;
+      border-style: solid;
+      border-color: rgba(255, 159, 22, 1);
+      border-width: 0px;
+      cursor: pointer;
+    }
+
+    #rrarpl-openf:hover {
+      animation: rrarpl-btn-hover-ani 0.3s cubic-bezier(0.16, 0.28, 0.23, 0.99);
+      background: rgb(119, 99, 63);
+      color: rgb(255, 255, 255);
+      border-width: 5px;
+    }
+
+    #rrarpl-cancelr {
+      margin: 0;
+      padding: 0;
+      width: 40px;
+      height: 40px;
+      font-size: 15px;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(172, 172, 172, 1);
+      color: rgba(82, 82, 82, 1);
+      border-radius: 20px;
+      border-style: solid;
+      border-color: rgba(255, 159, 22, 1);
+      border-width: 0px;
+      cursor: pointer;
+    }
+
+    #rrarpl-cancelr:hover {
+      animation: rrarpl-btn-hover-ani 0.3s cubic-bezier(0.16, 0.28, 0.23, 0.99);
+      background: rgb(119, 99, 63);
+      color: rgb(255, 255, 255);
+      border-width: 5px;
+    }
+
+    #rrarpl-cancelrec {
+      margin: 0;
+      padding: 0;
+      width: 40px;
+      height: 40px;
+      font-size: 15px;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(172, 172, 172, 1);
+      color: rgba(82, 82, 82, 1);
+      border-radius: 20px;
+      border-style: solid;
+      border-color: rgba(255, 159, 22, 1);
+      border-width: 0px;
+      cursor: pointer;
+    }
+
+    #rrarpl-cancelrec:hover {
+      animation: rrarpl-btn-hover-ani 0.3s cubic-bezier(0.16, 0.28, 0.23, 0.99);
+      background: rgb(119, 99, 63);
+      color: rgb(255, 255, 255);
+      border-width: 5px;
+    }
+
+    #rrarpl-record {
+      margin: 0;
+      padding: 0;
+      width: 40px;
+      height: 40px;
+      font-size: 15px;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(172, 172, 172, 1);
+      color: rgba(82, 82, 82, 1);
+      border-radius: 20px;
+      border-style: solid;
+      border-color: rgba(255, 159, 22, 1);
+      border-width: 0px;
+      cursor: pointer;
+    }
+
+    #rrarpl-record:hover {
+      animation: rrarpl-btn-hover-ani 0.3s cubic-bezier(0.16, 0.28, 0.23, 0.99);
+      background: rgb(119, 99, 63);
+      color: rgb(255, 255, 255);
+      border-width: 5px;
+    }
+
+    #rrarpl-ftbl {
+      position: absolute;
+      margin: 0 auto;
+      left: 0px;
+      right: 0px;
+      top: 10px;
+    }
+
+    #rrarpl-ftb {
+      position: absolute;
+      margin: 0 auto;
+      left: 0px;
+      right: 0px;
+      width: 250px;
+      height: 38px;
+      border-radius: 20px;
+      border-style: solid;
+      border-width: 3px;
+      border-color: rgba(121, 121, 121, 1);
+      background: rgba(121, 121, 121, 0.6);
+      color: #ffffff;
+      font-size: 20px;
+    }
+
+    #rrarpl-ftb:focus {
+      animation: rrarpl-ftb-focus-ani 0.3s cubic-bezier(0.16, 0.28, 0.23, 0.99);
+      background: rgba(153, 153, 153, 0.6);
+      border-color: rgba(255, 159, 22, 1);
+      border-width: 5px;
+    }
+
+    #rrarpl-acceptr {
+      margin: 0;
+      padding: 0;
+      width: 40px;
+      height: 40px;
+      font-size: 15px;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(172, 172, 172, 1);
+      color: rgba(82, 82, 82, 1);
+      border-radius: 20px;
+      border-style: solid;
+      border-color: rgba(255, 159, 22, 1);
+      border-width: 0px;
+      cursor: pointer;
+    }
+
+    #rrarpl-acceptr:hover {
+      animation: rrarpl-btn-hover-ani 0.3s cubic-bezier(0.16, 0.28, 0.23, 0.99);
+      background: rgb(119, 99, 63);
+      color: rgb(255, 255, 255);
+      border-width: 5px;
+    }
+
+    #rrarpl-stop {
+      margin: 0;
+      padding: 0;
+      width: 40px;
+      height: 40px;
+      font-size: 15px;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(172, 172, 172, 1);
+      color: rgba(82, 82, 82, 1);
+      border-radius: 20px;
+      border-style: solid;
+      border-color: rgba(255, 159, 22, 1);
+      border-width: 0px;
+      cursor: pointer;
+    }
+
+    #rrarpl-stop:hover {
+      animation: rrarpl-btn-hover-ani 0.3s cubic-bezier(0.16, 0.28, 0.23, 0.99);
+      background: rgb(119, 99, 63);
+      color: rgb(255, 255, 255);
+      border-width: 5px;
+    }
+
+    #rrarpl-pause {
+      margin: 0;
+      padding: 0;
+      width: 40px;
+      height: 37px;
+      font-size: 15px;
+      position: absolute;
+      top: 55px;
+      left: 10px;
+      background: rgba(255, 159, 22, 1);
+      color: rgba(85, 85, 85, 1);
+      border-color: rgba(255, 159, 22, 1);
+      border-radius: 10px;
+      border-style: solid;
+      border-width: 0px;
+      cursor: pointer;
+    }
+
+    #rrarpl-pause:hover {
+      animation: rra-rbtnrev-hover-ani 0.3s 1;
+      background: rgb(221, 137, 20);
+      color: rgb(255, 255, 255);
+    }
+    
+    #rrarpl-timer {
+      position: absolute;
+      top: 55px;
+      left: 10px;
+      border-width: 7px;
+      background-color: rgb(202, 178, 144);
+      border-color: rgba(255, 159, 22, 1);
+      height: 37px;
+      width: 100px;
+    }
+
+    #rrarpl-time {
+      font-family: "Montserrat", sans-serif;
+      font-size: 36px;
+      position: absolute;
+      top: 51px;
+      left: 67px;
+    }
+
+    #rrarpl-time-small {
+      font-family: "Montserrat", sans-serif;
+      font-size: 19px;
+      position: absolute;
+      left: 190px;
+      top: 10px;
+    }
+
+    #rrarpl-speed {
+      position: absolute;
+      top: 98px;
+      left: 10px;
+      font-size: 11px;
+      background: rgb(121, 121, 121);
+      border-radius: 10px;
+    }
+
+    #rrarpl-removespd {
+      margin: 0;
+      padding: 0;
+      width: 25px;
+      height: 25px;
+      background: rgba(255, 159, 22, 1);
+      color: rgba(85, 85, 85, 1);
+      border-color: rgba(255, 159, 22, 1);
+      border-radius: 30px;
+      border-style: solid;
+      border-width: 0px;
+      cursor: pointer;
+    }
+
+    #rrarpl-addspd {
+      margin: 0;
+      padding: 0;
+      width: 25px;
+      height: 25px;
+      background: rgba(255, 159, 22, 1);
+      color: rgba(85, 85, 85, 1);
+      border-color: rgba(255, 159, 22, 1);
+      border-radius: 30px;
+      border-style: solid;
+      border-width: 0px;
+      cursor: pointer;
+    }
+
+    #rrarpl-removespd:hover {
+      animation: rra-rbtnrev-hover-ani 0.3s 1;
+      background: rgb(221, 137, 20);
+      color: rgb(255, 255, 255);
+    }
+
+    #rrarpl-addspd:hover {
+      animation: rra-rbtnrev-hover-ani 0.3s 1;
+      background: rgb(221, 137, 20);
+      color: rgb(255, 255, 255);
+    }
+
+    #rrarpl-rpos {
+      position: absolute;
+      top: 88px;
+      left: 90px;
+      width: 240px;
+      height: 0px;
+      cursor: pointer;
+    }
+  </style>
+</div>
