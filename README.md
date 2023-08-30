@@ -1,5 +1,6 @@
-![RCA](https://github.com/NeXY1/ReplayCapturingAssistant/assets/80547768/f79c5419-df21-4b1a-af45-0d5e41e8acd4)
+![rca-git-prew](https://github.com/NeXY1/ReplayCapturingAssistant/assets/80547768/7a050da0-4d90-48c6-b350-fa04ee24d8ad)
 ---
+
 
 # About ℹ️
 
@@ -15,7 +16,8 @@ Replay Capturing Assistant — это приложение пользовате�
 отображается, важное действие появляется в правильном месте. (См. ниже) До нас в этой игре ни разу не создавалось что-то подобное, но теперь это возможно и вы можете выйти на новый
 уровень съемки футажей в BeamNG.
 
-![Phone_Crops](https://github.com/NeXY1/ReplayCapturingAssistant/assets/80547768/909561e2-19ad-4d5b-af22-c12a50160254)
+![Phone_Crops](https://github.com/NeXY1/ReplayCapturingAssistant/assets/80547768/3327647b-b264-41be-a7e1-4f5306147004)
+
 
 ---
 
